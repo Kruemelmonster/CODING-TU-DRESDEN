@@ -1,0 +1,718 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[ngerman]{babel}   % german layout, new german orthography
+\usepackage[utf8x]{inputenc} % direct use of german umlaute
+%\usepackage[latin1,utf8]{inputenc} % direct use of german umlaute, utf8 encoding
+\usepackage[T1]{fontenc}      % correct german hyphenation of words with umlaute
+\pagestyle{plain}             % layout with plain page number
+%\pagestyle{empty}             % empty heads and feet, no page number
+\parindent 0pt                % no paragraph indentation
+
+\usepackage[a4paper,top=25mm,left=20mm,right=20mm,bottom=20mm]{geometry} % modify page geometry
+%\usepackage{a4wide}    % paper format DIN A4
+%\usepackage{fancyhdr}  % page layout with header and footer
+\usepackage{hyperref}  % document navigation with hyperlinks
+\usepackage{graphicx}  % graphical elements
+%\usepackage{pstricks}  % postscript drawings
+\usepackage{textcomp}  % additional symbols
+%\usepackage{units}     % setting units typographically correct
+%\usepackage{color}     % colored elements
+\usepackage{xcolor}    % colored elements, extended package
+
+\usepackage{amsmath}   % math formulae
+\usepackage{amssymb}   % math symbols
+\usepackage{amsfonts}  % additional math fonts
+%\usepackage{enumerate} % enumerated itemization
+\usepackage{verbatim}  % verbatim display/commenting pieces of LaTeX code
+\usepackage{listings}  % display of source code listings
+%\usepackage{url}       % weblinks and e-mail addresses
+\usepackage{textcomp}
+%\pagestyle{fancy} % page layout with header and footer, requires fancyhdr-package
+%\fancyhf{}
+%\fancyhead[L]{\footnotesize \leftmark}
+%\fancyhead[R]{\footnotesize \rightmark}
+%\fancyfoot[C]{\small \thepage}
+\usepackage{url}
+\hypersetup{
+%    bookmarks=false,               % show bookmarks bar?
+    unicode=false,                 % non-Latin characters in Acrobat's bookmarks
+    pdftoolbar=true,               % show Acrobat's toolbar?
+    pdfmenubar=true,               % show Acrobat's menu?
+    pdffitwindow=false,            % window fit to page when opened
+    pdfstartview={FitH},           % fits the width of the page to the window
+    pdftitle={MRT1-V3},            % title
+    pdfauthor={Gr.xx/WS2011},      % author
+    pdfsubject={MRT1-Praktikum},   % subject of the document
+    pdfcreator={},                 % creator of the document
+    pdfproducer={},                % producer of the document
+    pdfkeywords={C-Programmierung},% list of keywords
+    pdfnewwindow=true,             % links in new window
+    colorlinks=true,               % false: boxed links; true: colored links
+    linkcolor=black,               % color of internal links
+    citecolor=green,               % color of links to bibliography
+    filecolor=red,                 % color of file links
+    urlcolor=blue                  % color of external links
+}
+
+
+\definecolor{listinggray}{gray}{0.9}
+\definecolor{lbcolor}{rgb}{0.9,0.9,0.9}
+\lstset{
+backgroundcolor=\color{lbcolor},
+    tabsize=4,
+%   rulecolor=,
+    language=[GNU]C++,
+        basicstyle=\scriptsize,
+        upquote=true,
+        aboveskip={1.5\baselineskip},
+        columns=fixed,
+        showstringspaces=false,
+        extendedchars=false,
+        breaklines=true,
+        prebreak = \raisebox{0ex}[0ex][0ex]{\ensuremath{\hookleftarrow}},
+        frame=single,
+        numbers=left,
+        showtabs=false,
+        showspaces=false,
+        showstringspaces=false,
+        identifierstyle=\ttfamily,
+        keywordstyle=\color[rgb]{0,0,1},
+        commentstyle=\color[rgb]{0.026,0.112,0.095},
+        stringstyle=\color[rgb]{0.627,0.126,0.941},
+        numberstyle=\color[rgb]{0.205, 0.142, 0.73},
+%        \lstdefinestyle{C++}{language=C++,style=numbers}’.
+}
+
+
+\begin{document}
+
+\thispagestyle{empty}
+
+\begin{center}
+
+~\\ \vspace{100pt}
+
+\underline{\hspace{300pt}}\\~\\~\\
+{\bf \large Mikrorechentechnik II- } {\large \bf Akustischer Schalter}\\~\\
+\underline{\hspace{300pt}}\\
+
+\vspace{50pt}
+Praktikum Mikrorechentechnik II\\
+im Sommersemester 2013\\~\\
+04.Juli.2013
+\vspace{200pt}
+
+Versuchsprotokoll\\~\\
+Gruppe 27\\~\\
+{\it Bastian Balk (2749649)\\ Timo Fuckner (3764171)\\ Mantvydas Kalibatas (3829982)\\ Arne Klaß (3805971)}\\~\\
+
+Betreuer: Dipl.-Ing. Stephan Hübler 
+
+\end{center}
+
+\newpage
+
+\thispagestyle{empty}
+
+~\\ \vspace{40pt}
+
+\tableofcontents
+\newpage
+\section{Bearbeitung der Aufgabenstellung}
+Die Aufgabe konnte anhang der zur Verfügung gestellen Aufgabenstellung größtenteils ohne Probleme bewerkstelligt werden. Insgesamt mussten 3 Funktionen geschrieben werden: Signaldetektion,Signalanalyse 
+mit Berechnung der Nulldurchgangsdichte und Berechnung des Nulldurchgangshistogrammes. 
+\subsection{Signaldetektion}
+\begin{figure}[!htp]
+\centering
+\includegraphics[]{./detec.pdf}
+\end{figure}
+
+Hierbei sollte der relevante Signalabschnitt ermittelt werden. Dies geschah mittels der Berechnung des Energieverlaufs. Wenn dieser einen gewissen Schwellwert, siehe Abbildung\ref{Detektion}, überschritten hat wurde dieser Teil extrahiert
+und zur weiteren Verarbeitung verwendet.
+
+Ein interessantes Problem ergabs sich hierbei bei der Speicherung der Effektivwerte in dem Array.
+\begin{lstlisting}[caption={detection.c}]
+long int eVerlauf[Messwertanzahl/FENSTER];            //Energieverläufe werden hier gespeichert
+
+for(i= 0; i <= *sample_anzahl; i++) {
+	teil += (*(*sample_anfang+i))*(*(*sample_anfang+i));        //berechnen des quadratischen effektivwertes
+	if( i>1 && i % FENSTER == 0 ) {
+		if(counter>(Messwertanzahl/FENSTER)) {
+				printf("error1");                                   
+				return -1;}
+			eVerlauf[counter] = teil;
+			counter++;
+			teil=0;}
+	}
+ 
+\end{lstlisting}
+Da mit einer 32 Bit Maschine gearbeitet wurde, stellte long int nur einen Wertebereich von 2$^31$ \^= 2,147483648*10$^9$ bereit.
+In einem Extremfall hätte sich als Effektivwert 32000$^2$ \^= 1.024$^9$ ergeben. Somit hätte man schon bei 2 Werten einen Überlauf erhalten.
+Um dieses Problem zu beheben muss man den Effektivwert bevor er in den Array gespeichert wird auf die Messwertanzahl normieren.
+
+
+
+\begin{figure}[!htp]
+\centering
+\includegraphics[scale=0.6]{./Detektion.pdf}
+\caption{Signaldetektion}
+\label{Detektion}
+
+\end{figure}
+\newpage
+
+\subsection{Nulldurchgangsdichte}
+\begin{figure}[!htp]
+\centering
+\includegraphics[]{./Dichte.pdf}
+\end{figure}
+\begin{lstlisting}[caption={dichte.c}]
+int ndg_dichte(short *feld_ptr, unsigned int anzahl_atw, float *dichte_ori, float *dichte_diff){
+
+   int i = 0;
+
+	int ndg = 0;      //Initialisierung von Zähler(i) und Nulldurchgänge
+	short fall = false, below = false, above =false; //Initialisierung von "Merkmale" für NDG
+
+  *dichte_ori = (float)0.0;
+
+  *dichte_diff = (float)0.0;
+
+	for(i;i<anzahl_atw;i++) {             //Alle Abtastwerte(atw) abarbeiten
+		if(*(feld_ptr+i) >= s)
+			above=true;
+		if(*(feld_ptr+i) <= -s)
+			below=true;
+		if(above & !below) 
+			fall =true;            
+		if(!above  && below)
+			fall =false;
+		if(above  && below ){       //Sind above und below gesetzt fand ein NDG statt
+			ndg++;
+
+			if (fall)
+				above = false ;
+			else
+				below = false;}
+	}
+	printf("ndg=%i",ndg);
+	*dichte_ori =anzahl_atw/ndg; /*dichte_ori=Anzahl der Nulldurchgänge im vorgegebenen
+				       Abtastwertefeld im Verhältnis zur Anzahl der Abtastwerte im gesamten Analysefenster.*/
+
+\end{lstlisting}
+
+Diese Funktion funktionierte von vornherein ohne Probleme. Die größtee Schwierigkeiten ergab sich hierbei durch das richtige zurücksetzen der Variablen above und below.
+Dies wurde jedoch durch die Hilfsvariable Fall sehr gut bewerkstelligt.
+
+\subsection{Nulldurchgangshistogramm}
+Diese Funktion konnte leider nicht vollständig fertiggestellt werden. Was auch die vielen print Ausgaben erklärt, die zum Debuggen gediehnt haben.
+Außerdem ergab sich seltsamerweiße ein Problem bei der doppelten Verwendung von Variablen. Obwohl diese bei einer erneuten Benutzung jedesmal neu mit 0 initialisiert wurden, ergab sich der 
+gewünschte Effekt erst nachdem eine neue Variable dafür eingesetzt wurde.
+
+
+\newpage
+\section{Quelltext}
+\begin{lstlisting}[caption={detection.c}]
+/* Detektion des Signals */
+
+#include <stdio.h>
+
+#include <stdlib.h>
+
+#define FENSTER 320        /* Fensterlaenge=20 ms fuer Energieberechnung */
+
+#define MIN_FENSTER_ANZ 10 /* Minimal 10 Fenster Signal */
+
+#define ABSTAND 10        /* Abstand Effektivwertquadrat Signal-Pause */
+
+#define Messwertanzahl 32000 //Anleitung
+
+int signal_detekt(short **sample_anfang,unsigned int *sample_anzahl)
+
+{
+
+int counter = 0, max = 0, threshold = 0, time = 0, p=0, hoehstes = 0, anfang = 0;
+
+	int  i;
+
+	long int teil = 0;
+
+	long int eVerlauf[Messwertanzahl/FENSTER];            //Energieverläufe werden hier gespeichert
+
+
+	for(i= 0; i <= *sample_anzahl; i++) {
+
+		teil += (*(*sample_anfang+i))*(*(*sample_anfang+i));        //berechnen des quadratischen effektivwertes
+
+		if( i>1 && i % FENSTER == 0 ) {				    // Über die Fensterlänge iterieren 		
+
+			if(counter>(Messwertanzahl/FENSTER)) {              // Falls 100 Überschritten wird "error1" 
+
+				printf("error1");                                   
+
+				return -1;}
+
+			eVerlauf[counter] = teil;                           //Speicher Effektivwerte in Array
+
+			counter++;
+
+			teil=0;}
+
+	}
+
+	for(i=0;i<=Messwertanzahl/FENSTER;i++){
+
+		if(max<eVerlauf[i])   
+
+			max=eVerlauf[i];}  //Höchster Wert als Max gespeichert
+
+
+
+
+
+	threshold=max/(Messwertanzahl/FENSTER);        // Schwelle festsetzen
+
+	// Finden des geeingeten Abschnitts
+
+	for(i=0;i<=Messwertanzahl/FENSTER;i++){
+
+		if(eVerlauf[i]>= threshold){   // Effektivwerte die über der Schwelle liegen
+
+			p=i;
+
+			time = 0;
+
+			while(eVerlauf[p]>=threshold && p< (Messwertanzahl/FENSTER)){
+
+				p++;
+
+				time++;}
+
+
+
+			if(hoehstes < time){
+
+				hoehstes=time;  //Neue Höchstzeit gefunden
+
+				anfang = i;     //Anfang ist der Beginn des Nutzsignals 
+
+			}
+
+
+
+		}
+
+	}
+
+	//Wenn Mindestzeit nicht erreicht wurde muss 1 zurückgegeben werden
+
+
+
+	if(hoehstes<MIN_FENSTER_ANZ)
+
+		return 1;
+
+
+
+	*sample_anfang += anfang*FENSTER;
+
+	*sample_anzahl =hoehstes*FENSTER;
+
+return (0);
+
+}
+\end{lstlisting}
+
+
+\begin{lstlisting}[caption={dichte.c}]
+/* Berechnung der NDG - Dichte eines Signalabschnittes */
+
+
+
+#include <stdio.h>
+
+#include <stdlib.h>
+
+#include <math.h>
+
+//#include <stdbool.h>
+
+#define true 1
+
+#define false 0
+
+
+
+int s = 60;
+
+int ndg_dichte(short *feld_ptr, unsigned int anzahl_atw, float *dichte_ori, float *dichte_diff){
+
+   int i = 0;
+
+	int ndg = 0;      //Initialisierung von Zähler(i) und Nulldurchgänge
+	short fall = false, below = false, above =false; //Initialisierung von "Merkmale" für NDG
+
+  *dichte_ori = (float)0.0;
+
+  *dichte_diff = (float)0.0;
+
+	for(i;i<anzahl_atw;i++) {             //Alle Abtastwerte(atw) abarbeiten
+		if(*(feld_ptr+i) >= s)
+			above=true;
+		if(*(feld_ptr+i) <= -s)
+			below=true;
+		if(above & !below) 
+			fall =true;                // Fall Hilfsvariable um je nachdem above oder below false zu setzen
+		if(!above  && below)
+			fall =false;
+		if(above  && below ){       //Sind above und below gesetzt fand ein NDG statt
+			ndg++;
+
+			if (fall)
+				above = false ;  // Falls  "gesetzt" ist, wird
+			else
+				below = false;}
+	}
+	printf("ndg=%i",ndg);
+	*dichte_ori =anzahl_atw/ndg; /*dichte_ori=Anzahl der Nulldurchgänge im vorgegebenen
+				       Abtastwertefeld im Verhältnis zur Anzahl der Abtastwerte im gesamten Analysefenster.*/
+
+
+	i = 0; ndg = 0;
+	above = false; fall = false; below = false; //Alle Werte resetten
+	// Selber Code wie oben nur für differenziertes Signal
+
+	for(i;i < anzahl_atw-1;i++) {// evtl. +1 !?!
+		if(*(feld_ptr+i)-*(feld_ptr+i+1) >= s){
+			above = true;}
+		if(*(feld_ptr+i)-*(feld_ptr+i+1) <= -s){
+			below = true;}
+		if(above  && !below )
+			fall = true;
+		if(!above && below )
+			fall = false;
+		if(above && below ){
+			ndg++;
+			if(fall )
+				above = false;
+			else
+				below = false;}
+
+	}
+	*dichte_diff = anzahl_atw/ndg;
+
+
+
+return (0);
+
+}
+
+\end{lstlisting}
+\begin{lstlisting}[caption={histo.c}]
+#include <math.h>
+
+#include <stdio.h>
+
+#include <stdlib.h>
+
+
+
+//#include <detection.c>
+
+#define Messwertanzahl 32000
+
+//benötigte angaben
+
+#define true 1
+
+#define false 0
+
+int s=50;                      //schwelle für NGD
+
+
+
+
+
+int ndg_histogramm(short *feld_ptr, unsigned int anzahl_atw, float *hist_ori, float *hist_diff){
+
+
+
+	int p = 0;	//Abstand zwischen Nulldurchgängen
+
+	int distance = 0,a=0; //a um p in feld zu speichern
+
+	int feld[Messwertanzahl];
+
+	int i = 0, ndg = 0, b=0, z=0, f=0, j=0;
+
+	int mittel,grenze1,grenze2;
+
+	unsigned int min =32000, max=0;
+
+	char fall = false, above = false, across=false;
+
+
+
+	for(p=0;p<4;p++){ 		//Nullsetzen alles Histogramme
+
+		*(hist_ori+p)=0;
+
+		*(hist_diff+p)=0;
+
+	}
+
+
+
+	for(i;i<anzahl_atw;i++) {    //genauso wie bei *Dichte*
+
+		if(*(feld_ptr+i) >= s)
+
+			across=true;
+
+		if(*(feld_ptr+i) <= -s)
+
+			above=true;
+
+		if(across & !above)
+
+			fall =true;
+
+		if(!across  && above)
+
+			fall =false;
+
+		if(across  && above ){
+
+      //printf(" p is %d | ",p);
+
+      if(b){
+
+			feld[a]=p;   //Speichert Abstand zwischen den NDG an der Stelle a in Array
+
+			distance +=p;
+
+         a++;
+
+         }
+
+         b=1;
+
+			if (fall)
+
+				across = false ;
+
+			else
+
+				above = false;
+
+			}
+
+		//wenn ein ndg stattfand muss p angeglichen werden
+		//P wird über "echten" NDG angeglichen
+
+
+		if((*feld_ptr+i)>=0 && *(feld_ptr+i+1) <0 || (*(feld_ptr+i)<= 0 && *(feld_ptr+i+1) >0)){
+
+			p = i-distance;
+
+         i++;              }
+
+	}
+
+}
+
+for(f=0; f<a;f++) printf("p[%d)=%d | ",f,feld[f]);
+
+//Restlichen Felder 0 setzen
+
+while(a<= anzahl_atw){ //Setze restliche Felder 0
+
+	feld[a]=0;
+
+	a++;
+
+}
+
+
+
+//Bestimmung von Max und Min für Zuordnung
+
+for(z=0; z<anzahl_atw;z++){
+
+	if(feld[z]>max)
+
+		max=feld[z];
+
+	if((feld[z]<min) && feld[z] !=0)
+
+		min=feld[z];
+
+      }
+
+	//Bestimmung der 4 Gruppen,
+
+	mittel=(max+min)/2;
+
+	grenze1=(mittel+min)/2;
+
+	grenze2=(min+grenze1)/2;
+
+   printf(" The limits are %d %d %d %d %d\n",min, mittel,grenze1,grenze2,max);
+
+	//Nulldurchgänge den Gruppen zuorden
+
+
+
+	for(j=0; j < anzahl_atw; j++) {
+
+   printf("<FIRST!!!");
+
+		if(min<=feld[j] && feld[j] < grenze1 ){
+
+			(*hist_ori)++ ;
+
+         }
+
+		if(grenze1<=feld[j] && feld[j] < mittel )
+
+			(*(hist_ori+1))++;
+
+		if(mittel<=feld[j] && feld[j] < grenze2 )
+
+			(*(hist_ori+2))++;
+
+		if(grenze2<=feld[j] && feld[j] < max )
+
+			(*(hist_ori+3))++;
+
+		//Genauso wie oben
+
+		 fall = false, above = false, across=false;
+
+       a=0; i=0;
+
+
+
+		for(i;i < anzahl_atw-1;i++) {	   
+		  if(*(feld_ptr+i)-*(feld_ptr+i+1) >=  s)
+
+				across = true;
+
+			if(*(feld_ptr+i)-*(feld_ptr+i+1) <=  -s)
+
+				above = true;
+
+			if(across  && !above )
+
+				fall = true;
+
+			if(!across && above )
+
+				fall = false;
+
+			if(across && above ){
+
+				feld[a]=p;
+
+				distance +=p;
+
+
+
+				if(fall )
+
+					across = false;
+
+				else
+
+					above = false;
+
+				a++;
+
+			}
+
+
+
+			//P anpassen über keinen "gezählten" NDG
+
+
+
+			if((*(feld_ptr+i)-*(feld_ptr+i+1) >= 0 && *(feld_ptr+i+1)-*(feld_ptr+i+2) < 0) || (*(feld_ptr+i)-*(feld_ptr+i+1) <= 0 && *(feld_ptr+i+1)-*(feld_ptr+i+2) > 0)){
+
+                           p = i-laenge;
+
+			}
+
+		}
+
+		//Restlichen Felder 0 setzen
+
+		while(a<= anzahl_atw){
+
+			feld[a]=0;
+
+			a++;
+
+		}
+
+		//Bestimmung von Max und Min für Zuordnung
+
+		for(a=0; a<=anzahl_atw;a++){
+
+			if(feld[a]>max)
+
+				max=feld[a];
+
+
+
+			if((feld[a]<min) && feld[a] !=0)
+
+				min=feld[a];
+
+		}
+
+
+
+		//Bestimmung der 4 Gruppen,
+
+		mittel=(max+min)/12;
+
+		grenze1=(mittel+min)/3;
+
+		grenze2=(mittel+max)/3;
+
+
+
+
+
+		//Nulldurchgänge den Gruppen zuorden
+
+
+
+		for(a=0; a <= anzahl_atw; a++) {
+
+			if(min<=feld[a] && feld[a] < grenze1 )
+
+				(*hist_diff)++ ;
+
+			if(grenze1<=feld[a] && feld[a] < mittel )
+
+				(*(hist_diff+1))++;
+
+			if(mittel<=feld[a] && feld[a] < grenze2 )
+
+				(*(hist_diff+2))++;
+
+			if(grenze2<=feld[a] && feld[a] < max )
+
+				(*(hist_diff+3))++;
+
+		}
+
+		return 0;
+
+	}
+
+   }
+\end{lstlisting}
+
+
+\end{document}
