@@ -1,4 +1,4 @@
-
+//Bastian Balk
 /* Detektion des Signals */
 #include <stdio.h>
 #include <stdlib.h>
